@@ -24,7 +24,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public BookDTO save(BookDTO bookDTO) {
         if ( bookRepository.existsByIsbn(bookDTO.getIsbn())) {
-            throw new BusinessException("Duplicated isbn");
+            throw new BusinessException("Duplicated isbn", 409);
         }
 
         Book entity = modelMapper.map(bookDTO, Book.class);

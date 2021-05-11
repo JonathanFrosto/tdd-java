@@ -2,7 +2,6 @@ package com.jonathanfrosto.tdd.controllers;
 
 import com.jonathanfrosto.tdd.domain.dto.BookDTO;
 import com.jonathanfrosto.tdd.services.BookService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

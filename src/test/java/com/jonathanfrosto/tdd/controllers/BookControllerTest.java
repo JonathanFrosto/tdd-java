@@ -77,11 +77,11 @@ class BookControllerTest {
     void failDuplicatedIsbn() throws Exception {
         String content = new ObjectMapper().writeValueAsString(getBookDTO());
 
-        when(bookService.save(any(BookDTO.class))).thenThrow(new BusinessException("Duplicated isbn"));
+        when(bookService.save(any(BookDTO.class))).thenThrow(new BusinessException("Duplicated isbn", 409));
 
         mockMvc.perform(getPostRequest(content))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errors", hasSize(1)))
                 .andExpect(jsonPath("$.errors.[0].message", is("Duplicated isbn")));
     }
