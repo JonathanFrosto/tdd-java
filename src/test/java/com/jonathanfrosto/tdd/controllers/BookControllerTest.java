@@ -18,10 +18,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -84,6 +87,38 @@ class BookControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errors", hasSize(1)))
                 .andExpect(jsonPath("$.errors.[0].message", is("Duplicated isbn")));
+    }
+
+    @Test
+    @DisplayName("Should get a book by id")
+    void shouldGetBookById() throws Exception {
+        Long idBook = 1L;
+
+        BookDTO response = getBookDTO();
+        response.setId(idBook);
+
+        when(bookService.getById(idBook)).thenReturn(response);
+
+        mockMvc.perform(get("/book/" + idBook))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(idBook.intValue())))
+                .andExpect(jsonPath("$.name", is("A alcateia")))
+                .andExpect(jsonPath("$.author", is("Jonathan Anthony")))
+                .andExpect(jsonPath("$.isbn", is("123")));
+    }
+
+    @Test
+    @DisplayName("Should not get a book by id")
+    void shouldNotGetBookById() throws Exception {
+        Long idBook = 2L;
+
+        when(bookService.getById(idBook)).thenThrow(new BusinessException("Book not found", 404));
+
+        mockMvc.perform(get("/book/" + idBook))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[0].message", is("Book not found")));
     }
 
     private BookDTO getBookDTO() {

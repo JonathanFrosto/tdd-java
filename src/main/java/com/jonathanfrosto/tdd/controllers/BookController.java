@@ -3,13 +3,12 @@ package com.jonathanfrosto.tdd.controllers;
 import com.jonathanfrosto.tdd.domain.dto.BookDTO;
 import com.jonathanfrosto.tdd.services.BookService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
 @RestController
+@RequestMapping("book")
 public class BookController {
 
     BookService bookService;
@@ -18,8 +17,13 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    @PostMapping("/book")
+    @PostMapping
     public ResponseEntity<BookDTO> createBook(@RequestBody @Valid BookDTO bookDTO) {
         return ResponseEntity.ok(bookService.save(bookDTO));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BookDTO> findBookById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(bookService.getById(id));
     }
 }

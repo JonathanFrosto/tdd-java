@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -64,12 +66,7 @@ class BookServiceTest {
     @DisplayName("Should save a book")
     void saveBook() {
         // Given
-        Book repositoryResponse = Book.builder()
-                .id(1L)
-                .name("A alcateia")
-                .author("Jonathan Anthony")
-                .isbn("123")
-                .build();
+        Book repositoryResponse = getRepositoryBook();
 
         when(bookRepository.save(any(Book.class))).thenReturn(repositoryResponse);
 
@@ -77,10 +74,10 @@ class BookServiceTest {
         BookDTO response = bookService.save(book);
 
         // Then
-        assertThat(response.getId()).isEqualTo(1L);
-        assertThat(response.getAuthor()).isEqualTo("Jonathan Anthony");
-        assertThat(response.getName()).isEqualTo("A alcateia");
-        assertThat(response.getIsbn()).isEqualTo("123");
+        assertThat(response.getId()).isEqualTo(repositoryResponse.getId());
+        assertThat(response.getAuthor()).isEqualTo(repositoryResponse.getAuthor());
+        assertThat(response.getName()).isEqualTo(repositoryResponse.getName());
+        assertThat(response.getIsbn()).isEqualTo(repositoryResponse.getIsbn());
     }
 
     @Test
@@ -99,4 +96,48 @@ class BookServiceTest {
 
         verify(bookRepository, never()).save(any(Book.class));
     }
+
+    @Test
+    @DisplayName("Should get a book by id")
+    void ShouldGetBookById() {
+        Long id = 1L;
+        Book repositoryResponse = getRepositoryBook();
+
+        // Given
+        when(bookRepository.findById(id)).thenReturn(Optional.of(repositoryResponse));
+
+        // When
+        BookDTO serviceResponse = bookService.getById(id);
+
+        //Then
+        assertThat(serviceResponse.getId()).isEqualTo(id);
+        assertThat(serviceResponse.getName()).isEqualTo(repositoryResponse.getName());
+        assertThat(serviceResponse.getAuthor()).isEqualTo(repositoryResponse.getAuthor());
+        assertThat(serviceResponse.getIsbn()).isEqualTo(repositoryResponse.getIsbn());
+    }
+
+    @Test
+    @DisplayName("Should not get a book by id")
+    void ShouldNotGetBookById() {
+        // Given
+        when(bookRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // When
+        Throwable exception = Assertions.catchThrowable(() -> bookService.getById(2L));
+
+        //Then
+        assertThat(exception)
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Book not found");
+    }
+
+    private Book getRepositoryBook() {
+        return Book.builder()
+                .id(1L)
+                .name("A alcateia")
+                .author("Jonathan Anthony")
+                .isbn("123")
+                .build();
+    }
+
 }

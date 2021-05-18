@@ -23,11 +23,18 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookDTO save(BookDTO bookDTO) {
-        if ( bookRepository.existsByIsbn(bookDTO.getIsbn())) {
+        if (bookRepository.existsByIsbn(bookDTO.getIsbn())) {
             throw new BusinessException("Duplicated isbn", 409);
         }
 
         Book entity = modelMapper.map(bookDTO, Book.class);
         return modelMapper.map(bookRepository.save(entity), BookDTO.class);
+    }
+
+    @Override
+    public BookDTO getById(Long id) {
+        return bookRepository.findById(id)
+                .map(entity -> modelMapper.map(entity, BookDTO.class))
+                .orElseThrow(() -> new BusinessException("Book not found", 404));
     }
 }
