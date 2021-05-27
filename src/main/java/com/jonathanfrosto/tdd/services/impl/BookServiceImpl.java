@@ -37,4 +37,13 @@ public class BookServiceImpl implements BookService {
                 .map(entity -> modelMapper.map(entity, BookDTO.class))
                 .orElseThrow(() -> new BusinessException("Book not found", 404));
     }
+
+    @Override
+    public void delete(Long id) {
+        if ( id == null ) {
+            throw new IllegalArgumentException("Book id cant be null");
+        }
+
+        bookRepository.deleteById(id);
+    }
 }

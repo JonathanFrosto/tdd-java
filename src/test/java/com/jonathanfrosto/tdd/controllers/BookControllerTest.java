@@ -18,12 +18,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.Optional;
-
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -119,6 +120,26 @@ class BookControllerTest {
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.[0].message", is("Book not found")));
+    }
+
+    @Test
+    @DisplayName("Should delete a book")
+    void shouldDeleteBookById() throws Exception {
+        mockMvc.perform(delete("/book/1"))
+                .andDo(print())
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Should not delete a book")
+    void shouldNotDeleteBookById() throws Exception {
+        doThrow(new BusinessException("Book not found", 404))
+                .when(bookService)
+                .delete(anyLong());
+
+        mockMvc.perform(delete("/book/2"))
+                .andDo(print())
+                .andExpect(status().isNotFound());
     }
 
     private BookDTO getBookDTO() {

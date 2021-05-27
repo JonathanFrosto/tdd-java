@@ -23,6 +23,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -129,6 +131,32 @@ class BookServiceTest {
         assertThat(exception)
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Book not found");
+    }
+
+    @Test
+    @DisplayName("Should delete a book")
+    void ShouldDeleteBook() {
+        long id = 1L;
+
+        bookService.delete(id);
+
+        assertDoesNotThrow(() -> IllegalArgumentException.class);
+
+        verify(bookRepository, times(1)).deleteById(id);
+    }
+
+    @Test
+    @DisplayName("Should not delete a book")
+    void ShouldNotDeleteBook() {
+        Long id = null;
+
+        Throwable exception = catchThrowable(() -> bookService.delete(id));
+
+        assertThat(exception)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Book id cant be null");
+
+        verify(bookRepository, never()).deleteById(any());
     }
 
     private Book getRepositoryBook() {
