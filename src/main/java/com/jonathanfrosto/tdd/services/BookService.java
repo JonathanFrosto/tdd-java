@@ -9,4 +9,6 @@ public interface BookService {
     BookDTO getById(Long id);
 
     void delete(Long id);
+
+    BookDTO update(BookDTO toUpdate);
 }

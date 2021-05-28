@@ -7,7 +7,6 @@ import com.jonathanfrosto.tdd.exceptions.BusinessException;
 import com.jonathanfrosto.tdd.repositories.BookRepository;
 import com.jonathanfrosto.tdd.services.impl.BookServiceImpl;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,8 +38,6 @@ class BookServiceTest {
     @Autowired
     BookRepository bookRepository;
 
-    private BookDTO book;
-
     @TestConfiguration
     static class configure {
         @Autowired
@@ -55,15 +52,6 @@ class BookServiceTest {
         }
     }
 
-    @BeforeEach
-    void setUp() {
-        book = BookDTO.builder()
-                .name("A alcateia")
-                .author("Jonathan Anthony")
-                .isbn("123")
-                .build();
-    }
-
     @Test
     @DisplayName("Should save a book")
     void saveBook() {
@@ -73,7 +61,7 @@ class BookServiceTest {
         when(bookRepository.save(any(Book.class))).thenReturn(repositoryResponse);
 
         // When
-        BookDTO response = bookService.save(book);
+        BookDTO response = bookService.save(getBookDTO());
 
         // Then
         assertThat(response.getId()).isEqualTo(repositoryResponse.getId());
@@ -89,7 +77,7 @@ class BookServiceTest {
         when(bookRepository.existsByIsbn(any(String.class))).thenReturn(true);
 
         // When
-        Throwable exception = Assertions.catchThrowable(() -> bookService.save(book));
+        Throwable exception = Assertions.catchThrowable(() -> bookService.save(getBookDTO()));
 
         //Then
         assertThat(exception)
@@ -138,11 +126,14 @@ class BookServiceTest {
     void ShouldDeleteBook() {
         long id = 1L;
 
+        Book entity = getRepositoryBook();
+        when(bookRepository.findById(id)).thenReturn(Optional.of(entity));
+
         bookService.delete(id);
 
-        assertDoesNotThrow(() -> IllegalArgumentException.class);
+        assertDoesNotThrow(() -> BusinessException.class);
 
-        verify(bookRepository, times(1)).deleteById(id);
+        verify(bookRepository, times(1)).delete(entity);
     }
 
     @Test
@@ -153,15 +144,63 @@ class BookServiceTest {
         Throwable exception = catchThrowable(() -> bookService.delete(id));
 
         assertThat(exception)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Book id cant be null");
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Book not found");
 
         verify(bookRepository, never()).deleteById(any());
     }
 
+    @Test
+    @DisplayName("Should update a book")
+    void ShouldUpdateBook() {
+        BookDTO bookDTO = getBookDTO();
+        bookDTO.setId(1L);
+
+        Book entity = getRepositoryBook();
+        when(bookRepository.findById(any())).thenReturn(Optional.of(entity));
+
+        BookDTO updated = bookService.update(bookDTO);
+
+        assertDoesNotThrow(() -> BusinessException.class);
+
+        verify(bookRepository, times(1)).save(entity);
+
+        assertThat(updated.getId()).isEqualTo(bookDTO.getId());
+        assertThat(updated.getName()).isEqualTo(bookDTO.getName());
+        assertThat(updated.getAuthor()).isEqualTo(bookDTO.getAuthor());
+        assertThat(updated.getIsbn()).isEqualTo(bookDTO.getIsbn());
+    }
+
+    @Test
+    @DisplayName("Should not update a book")
+    void ShouldNotUpdateBook() {
+        BookDTO bookDTO = getBookDTO();
+        bookDTO.setId(2L);
+
+        when(bookRepository.findById(any())).thenReturn(Optional.empty());
+
+        Throwable exception = catchThrowable(() -> bookService.update(bookDTO));
+
+        assertThat(exception)
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Book not found");
+
+        verify(bookRepository, never()).save(any());
+    }
+
+
+
     private Book getRepositoryBook() {
         return Book.builder()
                 .id(1L)
+                .name("A alcateia")
+                .author("Jonathan Anthony")
+                .isbn("123")
+                .build();
+    }
+
+    private BookDTO getBookDTO() {
+        return BookDTO.builder()
                 .name("A alcateia")
                 .author("Jonathan Anthony")
                 .isbn("123")

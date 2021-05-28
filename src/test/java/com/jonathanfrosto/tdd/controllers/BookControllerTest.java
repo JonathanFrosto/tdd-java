@@ -56,7 +56,7 @@ class BookControllerTest {
 
         when(bookService.save(any(BookDTO.class))).thenReturn(response);
 
-        mockMvc.perform(getPostRequest(content))
+        mockMvc.perform(postRequest(content))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(1)))
@@ -70,7 +70,7 @@ class BookControllerTest {
     void failRegisterBook() throws Exception {
         String content = new ObjectMapper().writeValueAsString(new BookDTO());
 
-        mockMvc.perform(getPostRequest(content))
+        mockMvc.perform(postRequest(content))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors", hasSize(3)));
@@ -83,7 +83,7 @@ class BookControllerTest {
 
         when(bookService.save(any(BookDTO.class))).thenThrow(new BusinessException("Duplicated isbn", 409));
 
-        mockMvc.perform(getPostRequest(content))
+        mockMvc.perform(postRequest(content))
                 .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errors", hasSize(1)))
@@ -142,6 +142,44 @@ class BookControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    @DisplayName("Should update a book")
+    void ShouldUpdateBook() throws Exception {
+        Long id = 1L;
+
+        BookDTO toUpdate = getBookDTO();
+        toUpdate.setId(id);
+
+        String body = new ObjectMapper().writeValueAsString(toUpdate);
+        when(bookService.update(toUpdate)).thenReturn(toUpdate);
+
+        mockMvc.perform(putRequest(id, body))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(id.intValue())))
+                .andExpect(jsonPath("$.name", is(toUpdate.getName())))
+                .andExpect(jsonPath("$.author", is(toUpdate.getAuthor())))
+                .andExpect(jsonPath("$.isbn", is(toUpdate.getIsbn())));
+    }
+
+    @Test
+    @DisplayName("Should not update a book")
+    void ShouldNotUpdateBook() throws Exception {
+        Long id = 2L;
+
+        BookDTO toUpdate = getBookDTO();
+        toUpdate.setId(id);
+
+        String body = new ObjectMapper().writeValueAsString(toUpdate);
+
+        when(bookService.update(toUpdate))
+                .thenThrow(new BusinessException("Book not found", 404));
+
+        mockMvc.perform(putRequest(id, body))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
     private BookDTO getBookDTO() {
         return BookDTO.builder()
                 .name("A alcateia")
@@ -150,11 +188,19 @@ class BookControllerTest {
                 .build();
     }
 
-    private MockHttpServletRequestBuilder getPostRequest(String content) {
+    private MockHttpServletRequestBuilder postRequest(String content) {
         return MockMvcRequestBuilders
                 .post("/book")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(content);
+    }
+
+    private MockHttpServletRequestBuilder putRequest(Long id, String body) {
+        return MockMvcRequestBuilders
+                .put("/book/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(body);
     }
 }
