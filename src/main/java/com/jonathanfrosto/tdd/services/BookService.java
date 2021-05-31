@@ -1,6 +1,8 @@
 package com.jonathanfrosto.tdd.services;
 
 import com.jonathanfrosto.tdd.domain.dto.BookDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface BookService {
 
@@ -11,4 +13,6 @@ public interface BookService {
     void delete(Long id);
 
     BookDTO update(BookDTO toUpdate);
+
+    Page<BookDTO> find(BookDTO bookDTO, Pageable pageable);
 }

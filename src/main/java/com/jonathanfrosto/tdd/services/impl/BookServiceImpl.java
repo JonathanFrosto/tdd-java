@@ -6,9 +6,15 @@ import com.jonathanfrosto.tdd.exceptions.BusinessException;
 import com.jonathanfrosto.tdd.repositories.BookRepository;
 import com.jonathanfrosto.tdd.services.BookService;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Transactional
@@ -73,5 +79,17 @@ public class BookServiceImpl implements BookService {
         bookRepository.save(entity);
 
         return bookDTO;
+    }
+
+    @Override
+    public Page<BookDTO> find(BookDTO bookDTO, Pageable pageable) {
+        Book entityExample = modelMapper.map(bookDTO, Book.class);
+
+        Page<Book> pageEntities = bookRepository.findAll(Example.of(entityExample), pageable);
+
+        List<BookDTO> dtos = modelMapper.map(pageEntities.getContent(), new TypeToken<List<BookDTO>>() {
+        }.getType());
+
+        return new PageImpl<>(dtos, pageable, pageEntities.getTotalElements());
     }
 }

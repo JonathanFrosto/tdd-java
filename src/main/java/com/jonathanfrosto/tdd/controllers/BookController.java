@@ -2,6 +2,8 @@ package com.jonathanfrosto.tdd.controllers;
 
 import com.jonathanfrosto.tdd.domain.dto.BookDTO;
 import com.jonathanfrosto.tdd.services.BookService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,5 +40,10 @@ public class BookController {
     public ResponseEntity<BookDTO> update(@PathVariable("id") Long id,
                                           @RequestBody BookDTO bookDTO) {
         return ResponseEntity.ok(bookService.update(bookDTO));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<BookDTO>> find(BookDTO bookDTO, Pageable pageRequest) {
+        return ResponseEntity.ok(bookService.find(bookDTO, pageRequest));
     }
 }

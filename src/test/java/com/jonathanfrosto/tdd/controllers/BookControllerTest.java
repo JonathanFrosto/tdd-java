@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -18,6 +21,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.Arrays;
+import java.util.Collections;
+
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -178,6 +185,28 @@ class BookControllerTest {
         mockMvc.perform(putRequest(id, body))
                 .andDo(print())
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Get book with filter")
+    void SholdGetBookByFilter() throws Exception {
+        Long id = 1L;
+        BookDTO bookDTO = getBookDTO();
+        bookDTO.setId(id);
+
+        when(bookService.find(any(BookDTO.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<BookDTO>(singletonList(bookDTO), PageRequest.of(0,100), 1L));
+
+        String filter = String.format("?title=%s&author=%s&page=0size=100",
+                bookDTO.getName(), bookDTO.getAuthor());
+
+        mockMvc.perform(get("/book".concat(filter)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.pageable.pageNumber", is(0)))
+                .andExpect(jsonPath("$.pageable.pageSize", is(100)));
     }
 
     private BookDTO getBookDTO() {
