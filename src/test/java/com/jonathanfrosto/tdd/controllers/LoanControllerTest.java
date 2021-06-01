@@ -2,6 +2,7 @@ package com.jonathanfrosto.tdd.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jonathanfrosto.tdd.domain.dto.LoanDTO;
+import com.jonathanfrosto.tdd.domain.dto.LoanFilterDTO;
 import com.jonathanfrosto.tdd.exceptions.BusinessException;
 import com.jonathanfrosto.tdd.services.LoanService;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -18,10 +22,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -132,6 +140,28 @@ class LoanControllerTest {
 
         mockMvc.perform(request)
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Get book with filter")
+    void ShouldGetBookByFilter() throws Exception {
+        Long id = 1L;
+        LoanDTO loanDTO = getLoanDTO();
+        loanDTO.setId(id);
+
+        when(loanService.find(any(LoanFilterDTO.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(singletonList(loanDTO), PageRequest.of(0, 10), 1L));
+
+        String filter = String.format("?isbn=%s&customer=%s&page=0&size=10",
+                loanDTO.getIsbn(), loanDTO.getCustomer());
+
+        mockMvc.perform(get("/loans".concat(filter)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.pageable.pageNumber", is(0)))
+                .andExpect(jsonPath("$.pageable.pageSize", is(10)));
     }
 
     private MockHttpServletRequestBuilder postRequest(String json) {

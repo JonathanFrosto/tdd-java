@@ -1,15 +1,21 @@
 package com.jonathanfrosto.tdd.services.impl;
 
 import com.jonathanfrosto.tdd.domain.dto.LoanDTO;
+import com.jonathanfrosto.tdd.domain.dto.LoanFilterDTO;
 import com.jonathanfrosto.tdd.domain.entities.Loan;
 import com.jonathanfrosto.tdd.exceptions.BusinessException;
 import com.jonathanfrosto.tdd.repositories.BookRepository;
 import com.jonathanfrosto.tdd.repositories.LoanRepository;
 import com.jonathanfrosto.tdd.services.LoanService;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.List;
 
 public class LoanServiceImpl implements LoanService {
 
@@ -53,5 +59,17 @@ public class LoanServiceImpl implements LoanService {
 
         entity.setReturned(true);
         loanRepository.save(entity);
+    }
+
+    @Override
+    public Page<LoanDTO> find(LoanFilterDTO loanFilterDTO, Pageable pageable) {
+        Loan entityExample = modelMapper.map(loanFilterDTO, Loan.class);
+
+        Page<Loan> pageEntities = loanRepository.findAll(Example.of(entityExample), pageable);
+
+        List<LoanDTO> dtos = modelMapper.map(pageEntities.getContent(), new TypeToken<List<LoanDTO>>() {
+        }.getType());
+
+        return new PageImpl<>(dtos, pageable, pageEntities.getTotalElements());
     }
 }

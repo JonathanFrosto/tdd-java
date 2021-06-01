@@ -2,6 +2,7 @@ package com.jonathanfrosto.tdd.services;
 
 import com.jonathanfrosto.tdd.TestConfig;
 import com.jonathanfrosto.tdd.domain.dto.LoanDTO;
+import com.jonathanfrosto.tdd.domain.dto.LoanFilterDTO;
 import com.jonathanfrosto.tdd.domain.entities.Book;
 import com.jonathanfrosto.tdd.domain.entities.Loan;
 import com.jonathanfrosto.tdd.exceptions.BusinessException;
@@ -17,11 +18,15 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Optional;
 
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -69,7 +74,7 @@ class LoanServiceTest {
         Loan savedLoan = Loan.builder().id(1L).build();
         when(loanRepository.save(any(Loan.class))).thenReturn(savedLoan);
 
-        LoanDTO loanDTO = LoanDTO.builder().isbn("123").customer("jonathan").build();
+        LoanDTO loanDTO = getLoanDTO();
 
         // When
         LoanDTO response = loanService.save(loanDTO);
@@ -82,7 +87,7 @@ class LoanServiceTest {
     @DisplayName("Should not save a loan - already loaned")
     void shouldNotSaveLoanedBook() {
         // Given
-        LoanDTO loanDTO = LoanDTO.builder().isbn("123").customer("jonathan").build();
+        LoanDTO loanDTO = getLoanDTO();
 
         when(bookRepository.findByIsbn(any(String.class))).thenReturn(Optional.of(new Book()));
         when(loanRepository.existsByBookAndReturnedFalse(any(Book.class))).thenReturn(true);
@@ -118,5 +123,35 @@ class LoanServiceTest {
         assertThat(exception)
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Loan not found");
+    }
+
+    @Test
+    @DisplayName("Should get a loan by example")
+    void ShouldGetLoanByExample() {
+        // Given
+        LoanFilterDTO loanFilterDTO = new LoanFilterDTO();
+        loanFilterDTO.setCustomer("jonathan");
+
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        Loan loanEntity = Loan.builder()
+                .id(1L)
+                .customer(loanFilterDTO.getCustomer())
+                .build();
+
+        PageImpl<Loan> loans = new PageImpl<>(singletonList(loanEntity), pageRequest, 1);
+
+        when(loanRepository.findAll(any(), eq(pageRequest))).thenReturn(loans);
+
+        // When
+        Page<LoanDTO> loanDTOS = loanService.find(loanFilterDTO, pageRequest);
+
+        assertThat(loanDTOS.getTotalElements()).isEqualTo(1);
+        assertThat(loanDTOS.getSize()).isEqualTo(10);
+        assertThat(loanDTOS.getContent().get(0).getCustomer()).isEqualTo(loanFilterDTO.getCustomer());
+    }
+
+    private LoanDTO getLoanDTO() {
+        return LoanDTO.builder().isbn("123").customer("jonathan").build();
     }
 }
