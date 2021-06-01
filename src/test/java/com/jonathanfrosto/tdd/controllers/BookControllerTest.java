@@ -21,9 +21,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -195,7 +192,7 @@ class BookControllerTest {
         bookDTO.setId(id);
 
         when(bookService.find(any(BookDTO.class), any(Pageable.class)))
-                .thenReturn(new PageImpl<BookDTO>(singletonList(bookDTO), PageRequest.of(0,100), 1L));
+                .thenReturn(new PageImpl<>(singletonList(bookDTO), PageRequest.of(0, 100), 1L));
 
         String filter = String.format("?title=%s&author=%s&page=0size=100",
                 bookDTO.getName(), bookDTO.getAuthor());

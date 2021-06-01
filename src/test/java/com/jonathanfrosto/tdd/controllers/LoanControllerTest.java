@@ -20,7 +20,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,10 +32,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class LoanControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @MockBean
-    private LoanService loanService;
+    LoanService loanService;
 
     private static final String LOAN_API = "/loans";
 
@@ -44,7 +43,7 @@ class LoanControllerTest {
     @DisplayName("Should borrow a book")
     void borrowBook() throws Exception {
 
-        LoanDTO loanDTO = LoanDTO.builder().isbn("123").customer("Person").build();
+        LoanDTO loanDTO = getLoanDTO();
 
         String json = new ObjectMapper().writeValueAsString(loanDTO);
 
@@ -54,7 +53,7 @@ class LoanControllerTest {
                 .customer(loanDTO.getCustomer())
                 .build();
 
-        given(loanService.save(any(LoanDTO.class))).willReturn(response);
+        given(loanService.save(loanDTO)).willReturn(response);
 
         mockMvc.perform(postRequest(json))
                 .andDo(print())
@@ -74,10 +73,10 @@ class LoanControllerTest {
     }
 
     @Test
-    @DisplayName("Shoud not borrow a book - book not found")
+    @DisplayName("Should not borrow a book - book not found")
     void borrowBookThenNotFind() throws Exception {
         // Given
-        LoanDTO request = LoanDTO.builder().isbn("999").customer("Person").build();
+        LoanDTO request = getLoanDTO();
 
         given(loanService.save(request)).willThrow(new BusinessException("Book not found", 404));
 
@@ -90,10 +89,31 @@ class LoanControllerTest {
                 .andExpect(jsonPath("$.errors.[0].message", is("Book not found")));
     }
 
+    @Test
+    @DisplayName("Should not borrow a book - Conflict book already loaned")
+    void borrowBookThenConflict() throws Exception {
+        // Given
+        LoanDTO loanDTO = getLoanDTO();
+
+        String json = new ObjectMapper().writeValueAsString(loanDTO);
+
+        given(loanService.save(loanDTO)).willThrow(new BusinessException("Book already loaned", 409));
+
+        // Then
+        mockMvc.perform(postRequest(json))
+                .andDo(print())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errors.[0].message", is("Book already loaned")));
+    }
+
     private MockHttpServletRequestBuilder postRequest(String json) {
         return MockMvcRequestBuilders.post(LOAN_API)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .content(json);
+    }
+
+    private LoanDTO getLoanDTO() {
+        return LoanDTO.builder().isbn("123").customer("Person").build();
     }
 }
