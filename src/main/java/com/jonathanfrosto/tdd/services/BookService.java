@@ -15,4 +15,6 @@ public interface BookService {
     BookDTO update(BookDTO toUpdate);
 
     Page<BookDTO> find(BookDTO bookDTO, Pageable pageable);
+
+    BookDTO findByIsbn(String isbn);
 }

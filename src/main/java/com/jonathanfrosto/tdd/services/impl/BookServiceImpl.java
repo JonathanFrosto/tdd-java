@@ -92,4 +92,13 @@ public class BookServiceImpl implements BookService {
 
         return new PageImpl<>(dtos, pageable, pageEntities.getTotalElements());
     }
+
+    @Override
+    public BookDTO findByIsbn(String isbn) {
+        Book entity = bookRepository
+                .findByIsbn(isbn)
+                .orElseThrow(() -> new BusinessException(BOOK_NOT_FOUND, 404));
+
+        return modelMapper.map(entity, BookDTO.class);
+    }
 }

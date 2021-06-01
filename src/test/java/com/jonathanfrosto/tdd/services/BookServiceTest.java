@@ -141,15 +141,15 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Should not delete a book")
+    @DisplayName("Should not delete a book - id null")
     void ShouldNotDeleteBook() {
         Long id = null;
 
         Throwable exception = catchThrowable(() -> bookService.delete(id));
 
         assertThat(exception)
-                .isInstanceOf(BusinessException.class)
-                .hasMessage("Book not found");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Book id can't be null");
 
         verify(bookRepository, never()).deleteById(any());
     }
@@ -213,6 +213,44 @@ class BookServiceTest {
         assertThat(bookDTOS.getTotalElements()).isEqualTo(1);
         assertThat(bookDTOS.getSize()).isEqualTo(10);
         assertThat(bookDTOS.getContent().get(0).getAuthor()).isEqualTo(repositoryBook.getAuthor());
+    }
+
+    @Test
+    @DisplayName("Should get a book by isbn")
+    void ShouldGetBookByIsbn() {
+        // Given
+        String isbn = "123";
+
+        Book repositoryBook = getRepositoryBook();
+        repositoryBook.setIsbn(isbn);
+
+        when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.of(repositoryBook));
+
+        // When
+        BookDTO foundBook = bookService.findByIsbn(isbn);
+
+        // Then
+        assertThat(foundBook.getIsbn()).isEqualTo(isbn);
+    }
+
+    @Test
+    @DisplayName("Should not get a book by isbn")
+    void ShouldNotGetBookByIsbn() {
+        // Given
+        String isbn = "123";
+
+        Book repositoryBook = getRepositoryBook();
+        repositoryBook.setIsbn(isbn);
+
+        when(bookRepository.findByIsbn(isbn)).thenReturn(Optional.empty());
+
+        // When
+        Throwable exception = catchThrowable(() -> bookService.findByIsbn(isbn));
+
+        // Then
+        assertThat(exception)
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Book not found");
     }
 
     private Book getRepositoryBook() {
