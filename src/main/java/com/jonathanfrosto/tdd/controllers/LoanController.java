@@ -4,10 +4,7 @@ import com.jonathanfrosto.tdd.domain.dto.LoanDTO;
 import com.jonathanfrosto.tdd.services.LoanService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -24,5 +21,10 @@ public class LoanController {
     @PostMapping
     public ResponseEntity<LoanDTO> saveLoan(@RequestBody @Valid LoanDTO body) {
         return ResponseEntity.status(HttpStatus.CREATED).body(loanService.save(body));
+    }
+
+    @PatchMapping("/{id}")
+    public void returnBookFromLoan(@PathVariable Long id) {
+        loanService.giveBackBook(id);
     }
 }

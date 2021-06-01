@@ -24,8 +24,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
@@ -93,5 +94,29 @@ class LoanServiceTest {
         assertThat(exception)
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Book already loaned");
+    }
+
+    @Test
+    @DisplayName("Should give back a book of a loan")
+    void shouldGiveBackBookFromLoan() {
+        // Given
+        Long id = 1L;
+
+        Loan entity = Loan.builder().id(id).build();
+        when(loanRepository.findById(id)).thenReturn(Optional.of(entity));
+
+        // Then
+        assertDoesNotThrow(() -> loanService.giveBackBook(id));
+        verify(loanRepository, times(1)).save(entity);
+    }
+
+    @Test
+    @DisplayName("Should not give back a book of a loan")
+    void shouldNotGiveBackBookFromLoan() {
+        Throwable exception = catchThrowable(() -> loanService.giveBackBook(1L));
+
+        assertThat(exception)
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Loan not found");
     }
 }

@@ -9,6 +9,7 @@ import com.jonathanfrosto.tdd.services.LoanService;
 import org.modelmapper.ModelMapper;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 public class LoanServiceImpl implements LoanService {
 
@@ -42,5 +43,15 @@ public class LoanServiceImpl implements LoanService {
                 .build();
 
         return modelMapper.map(loanRepository.save(entity), LoanDTO.class);
+    }
+
+    @Override
+    public void giveBackBook(Long id) {
+        Loan entity = loanRepository
+                .findById(id)
+                .orElseThrow(() -> new BusinessException("Loan not found", 404));
+
+        entity.setReturned(true);
+        loanRepository.save(entity);
     }
 }

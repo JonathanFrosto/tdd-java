@@ -21,6 +21,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -104,6 +106,32 @@ class LoanControllerTest {
                 .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.errors.[0].message", is("Book already loaned")));
+    }
+
+    @Test
+    @DisplayName("Should give back a book of a loan")
+    void shouldGiveBackBookFromLoan() throws Exception {
+        MockHttpServletRequestBuilder request = patch(LOAN_API + "/1")
+                .contentType(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(request)
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Should not give back a book of a loan")
+    void shouldNotGiveBackBookFromLoan() throws Exception {
+        Long id = 1L;
+
+        MockHttpServletRequestBuilder request = patch(LOAN_API + "/" + id)
+                .contentType(MediaType.APPLICATION_JSON);
+
+        doThrow(new BusinessException("Loan not found", 404))
+                .when(loanService)
+                .giveBackBook(id);
+
+        mockMvc.perform(request)
+                .andExpect(status().isNotFound());
     }
 
     private MockHttpServletRequestBuilder postRequest(String json) {
