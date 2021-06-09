@@ -12,4 +12,6 @@ public interface LoanService {
     void giveBackBook(Long id);
 
     Page<LoanDTO> find(LoanFilterDTO loanFilterDTO, Pageable pageable);
+
+    Page<LoanDTO> findByBook(Long id, Pageable pagaRequest);
 }

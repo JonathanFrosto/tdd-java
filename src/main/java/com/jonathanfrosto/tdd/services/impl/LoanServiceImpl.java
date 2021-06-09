@@ -13,10 +13,14 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Transactional
+@Service
 public class LoanServiceImpl implements LoanService {
 
     private final ModelMapper modelMapper;
@@ -71,5 +75,15 @@ public class LoanServiceImpl implements LoanService {
         }.getType());
 
         return new PageImpl<>(dtos, pageable, pageEntities.getTotalElements());
+    }
+
+    @Override
+    public Page<LoanDTO> findByBook(Long id, Pageable pagaRequest) {
+        Page<Loan> pageEntities = loanRepository.findByBookId(id, pagaRequest);
+
+        List<LoanDTO> dtos = modelMapper.map(pageEntities.getContent(), new TypeToken<List<LoanDTO>>() {
+        }.getType());
+
+        return new PageImpl<>(dtos, pagaRequest, pageEntities.getTotalElements());
     }
 }

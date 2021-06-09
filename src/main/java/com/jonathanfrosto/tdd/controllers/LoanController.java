@@ -15,7 +15,7 @@ import javax.validation.Valid;
 @RequestMapping("loans")
 public class LoanController {
 
-    private final LoanService loanService;
+    LoanService loanService;
 
     public LoanController(LoanService loanService) {
         this.loanService = loanService;
