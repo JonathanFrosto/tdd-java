@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jonathanfrosto.tdd.domain.dto.BookDTO;
 import com.jonathanfrosto.tdd.exceptions.BusinessException;
 import com.jonathanfrosto.tdd.services.BookService;
+import com.jonathanfrosto.tdd.services.LoanService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +46,9 @@ class BookControllerTest {
 
     @MockBean
     BookService bookService;
+
+    @MockBean
+    LoanService loanService;
 
     @Test
     @DisplayName("Should create a book")
